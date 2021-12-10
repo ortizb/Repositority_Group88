@@ -1,0 +1,131 @@
+#include <vector>
+#include <string>
+#include <map>
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <stdio.h>
+#include <utility>
+#include <math.h>
+#include <algorithm>
+
+using namespace std;
+
+vector<pair<pair<string, int>, vector<pair<string, int>>>> graphGenerator(ifstream& inputFile, vector<pair<pair<string, int>, vector<pair<string, int>>> >& playerList)
+{
+    char startLine[3];
+    string name, birthday, currLine;
+    int birthdate;
+    //stringstream splitter;        
+    inputFile.read(startLine, 3);
+    while (getline(inputFile, currLine))
+    {
+        stringstream splitter(currLine);
+        getline(splitter, name, ',');
+        getline(splitter, birthday);
+        birthdate = stoi(birthday);
+
+        if (playerList.size() == 0)
+        {
+            pair<string, int> sourceVertex(name, birthdate);
+            pair<string, int> emptyVertex("", 0);
+            vector<pair<string, int>> v;
+            v.push_back(emptyVertex);
+            pair<pair<string, int>, vector<pair<string, int>>> firstVertex(sourceVertex, v);
+            playerList.push_back(firstVertex);
+        }
+        else if (playerList.size() == 1)
+        {
+            pair<string, int> secondVertex(name, abs(birthdate - playerList[0].first.second));
+            playerList[0].second[0] = secondVertex;
+            secondVertex.second = birthdate;
+            pair<string, int> sourceVertex(playerList[0].first.first, abs(birthdate - playerList[0].first.second));
+            vector<pair<string, int>> v;
+            v.push_back(sourceVertex);
+            pair<pair<string, int>, vector<pair<string, int>>> nVertex(secondVertex, v);
+            playerList.push_back(nVertex);
+        }
+        else if (playerList.size() > 1)
+        {
+            pair<string, int> currVertex(name, birthdate);
+            pair<string, int> addToSource(name, abs(birthdate - playerList[0].first.second));
+            playerList[0].second.push_back(addToSource);
+            pair<string, int> addSourceToCurr(playerList[0].first.first, abs(birthdate - playerList[0].first.second));
+            vector<pair<string, int>> v;
+            v.push_back(addSourceToCurr);
+            pair<string, int> priorVertex(playerList[playerList.size() - 1].first.first, abs(birthdate - playerList[playerList.size() - 1].first.second));
+            pair<string, int> addToPrior(name, abs(birthdate - playerList[playerList.size() - 1].first.second));
+            playerList[playerList.size() - 1].second.push_back(addToPrior);
+            v.push_back(priorVertex);
+            pair<pair<string, int>, vector<pair<string, int>>> pairToPush(currVertex, v);
+            playerList.push_back(pairToPush);
+
+        }
+    }
+    if (playerList.size() > 2)
+    {
+        pair<string, int> finalEdge(playerList[1].first.first, abs(playerList[playerList.size() - 1].first.second - playerList[1].first.second));
+        playerList[playerList.size() - 1].second.push_back(finalEdge);
+        finalEdge.first = playerList[playerList.size() - 1].first.first;
+        playerList[1].second.push_back(finalEdge);
+    }
+    return playerList;
+}
+
+vector< pair< pair<string, string>, int>> Kruskals(vector<pair<pair<string, int>, vector<pair<string, int>>> >& playerList)
+{
+    vector<pair<pair<string, string>, int>> kruskalMST, kruskalList;
+    for (int i = 0; i < playerList.size(); i++)
+    {
+        for (int j = 0; j < playerList[i].second.size(); j++)
+        {
+            pair<string, string> edge(playerList[i].first.first, playerList[i].second[j].first);
+            int weight = playerList[i].second[j].second;
+            bool alreadyEntered = false;
+            pair<pair<string, string>, int> kruskalEdge(edge, weight);
+            for (int k = 0; k < kruskalList.size(); k++)
+            {
+                if (edge.first == kruskalList[k].first.second && edge.second == kruskalList[k].first.first && weight == kruskalList[k].second)
+                {
+                    alreadyEntered = true;
+                }
+            }
+
+            if (!alreadyEntered)
+            {
+                kruskalList.push_back(kruskalEdge);
+            }
+        }
+    }
+    
+    int minIndex;
+    for (int i = 0; i < kruskalList.size() - 1; i++)
+    {
+        minIndex = i;
+        for (int j = i + 1; j < kruskalList.size(); j++)
+        {
+            if (kruskalList[j].second < kruskalList[minIndex].second)
+            {
+                minIndex = j;
+            }
+        }
+
+        pair<pair<string, string>, int> temp = kruskalList[minIndex];
+        kruskalList[minIndex] = kruskalList[i];
+        kruskalList[i] = temp;
+
+    }    
+
+    map<string, bool> insertedVertices;
+    for (int i = 0; i < kruskalList.size(); i++)
+    {
+        if (insertedVertices.find(kruskalList[i].first.first) == insertedVertices.end() || insertedVertices.find(kruskalList[i].first.second) == insertedVertices.end())
+        {
+            kruskalMST.push_back(kruskalList[i]);
+            insertedVertices[kruskalList[i].first.first] = true;
+            insertedVertices[kruskalList[i].first.second] = true;
+        }
+    }
+
+    return kruskalMST;
+}
