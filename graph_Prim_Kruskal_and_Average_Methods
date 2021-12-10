@@ -129,3 +129,71 @@ vector< pair< pair<string, string>, int>> Kruskals(vector<pair<pair<string, int>
 
     return kruskalMST;
 }
+
+vector< pair< pair<string, string>, int>> Prims(vector<pair<pair<string, int>, vector<pair<string,int>>>>& playerList)
+{
+    vector<pair<pair<string, string>, int>> primsMST;
+    vector<string> sortedVertices, unsortedVertices;
+    map<string, bool> insertedVertices;    
+    sortedVertices.push_back(playerList[0].first.first);    
+    insertedVertices[playerList[0].first.first] = true;
+    for (int i = 1; i < playerList.size(); i++)
+    {
+        unsortedVertices.push_back(playerList[i].first.first);
+    }
+
+    while (!unsortedVertices.empty())
+    {
+        int min = 2147483647;
+        pair<string, string>  edge;
+        int weight = 0;
+        pair<pair<string, string>, int> toPush;
+        for (int i = 0; i < playerList.size(); i++)
+        {
+            for (int j = 0; j < sortedVertices.size(); j++)
+            {
+                if (playerList[i].first.first == sortedVertices[j])
+                {
+                    for (int k = 0; k < playerList[i].second.size(); k++)
+                    {
+                        if ((insertedVertices.find(playerList[i].first.first) == insertedVertices.end() || insertedVertices.find(playerList[i].second[k].first) == insertedVertices.end()) && min > playerList[i].second[k].second)
+                        {
+                            min = playerList[i].second[k].second;
+                            edge.first = playerList[i].first.first;
+                            edge.second = playerList[i].second[k].first;
+                            weight = min;
+                        }
+                    }
+                }
+            }
+        }
+        toPush.first = edge;
+        toPush.second = weight;
+        primsMST.push_back(toPush);
+        insertedVertices[edge.second] = true;
+        sortedVertices.push_back(edge.second);
+        for (int i = 0; i < unsortedVertices.size(); i++)
+        {
+            if (edge.second == unsortedVertices[i])
+            {
+                unsortedVertices.erase(unsortedVertices.begin()+i);
+            }
+        }
+
+    }
+
+    return primsMST;
+}
+
+double averageCal(vector< pair< pair<string, string>, int>> mstList)
+{
+    int numerator, denominator;
+    numerator = 0;
+    denominator = mstList.size();
+    for(int i = 0; i < mstList.size(); i++)
+    {
+        numerator += mstList[i].second;
+    }
+
+    return (double)numerator / denominator;
+}
